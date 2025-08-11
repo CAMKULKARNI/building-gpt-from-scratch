@@ -166,10 +166,7 @@ encoder = tiktoken.get_encoding("gpt2")
 model = GPTModel(GPTConfig())
 optimizer = keras.optimizers.AdamW(learning_rate=3e-4)
 
-with open("input.txt", "r") as f:
-    text = f.read()
-
-dataloader = Dataloader(batch_size=4, block_size=32)
+dataloader = Dataloader(batch_size=16, block_size=1024)
 
 x, y = dataloader.next_batch()
 logits, loss = model(x, y)

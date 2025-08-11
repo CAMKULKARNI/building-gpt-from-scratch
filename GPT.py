@@ -80,6 +80,9 @@ class Head(keras.layers.Layer):
         k = self.key(x)  # shape [B, T, head_size]
         q = self.query(x)  # shape [B, T, head_size]
         v = self.value(x)  # shape [B, T, head_size]
+
+        # Literature has weights as q * k.t
+        # I am not sure why the following is not used as the model would learn the same thing ultimately
         weights = (k @ tf.transpose(q, perm=[0, 2, 1])) * (C ** (-0.5))  # shape [B, T, T]
         weights = tf.where(self.tril[:T, :T] == 0, tf.convert_to_tensor(float("-inf")), weights)
         weights = tf.nn.softmax(weights, axis=-1)
