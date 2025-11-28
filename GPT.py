@@ -241,10 +241,12 @@ class GPT(keras.Model):
             # tf.random.categorical is more efficient when given logits directly.
             idx_next = tf.random.categorical(logits, num_samples=1) # shape [batch_size, 1]
 
+            yield idx_next
+
             # Append the sampled index to the running sequence
             idx = tf.concat([idx, idx_next], axis=-1) # shape [batch_size, sequence_length + 1]
             
-        return idx
+        # return idx
 
 
 # --- Main Execution ---
@@ -275,36 +277,37 @@ def main():
     print("-" * 25)
 
     # --- Train the model ---
-    print("\n--- Starting model training ---")
-    optimizer = keras.optimizers.Adam(learning_rate=LEARNING_RATE)
+    if int(input("train?")):
+        print("\n--- Starting model training ---")
+        optimizer = keras.optimizers.Adam(learning_rate=LEARNING_RATE)
 
-    # Training loop
-    bar = tqdm(range(NUM_ITERATIONS))
-    val_loss = tf.constant(0.0) # Initialize val_loss
-    for step in bar:
-        # Get a batch of training data
-        x_batch, y_batch = get_batch("train")
+        # Training loop
+        bar = tqdm(range(NUM_ITERATIONS))
+        val_loss = tf.constant(0.0) # Initialize val_loss
+        for step in bar:
+            # Get a batch of training data
+            x_batch, y_batch = get_batch("train")
 
-        # Evaluate the loss and compute gradients
-        with tf.GradientTape() as tape:
-            _, loss = model(x_batch, y_batch)
-        
-        grads = tape.gradient(loss, model.trainable_weights)
-        optimizer.apply_gradients(zip(grads, model.trainable_weights))
+            # Evaluate the loss and compute gradients
+            with tf.GradientTape() as tape:
+                _, loss = model(x_batch, y_batch)
+            
+            grads = tape.gradient(loss, model.trainable_weights)
+            optimizer.apply_gradients(zip(grads, model.trainable_weights))
 
-        # Periodically evaluate validation loss
-        if step % EVAL_INTERVAL == 0 or step == NUM_ITERATIONS - 1:
-            x_val_batch, y_val_batch = get_batch("val")
-            _, val_loss = model(x_val_batch, y_val_batch)
-        
-        bar.set_postfix(train_loss=loss.numpy(), val_loss=val_loss.numpy())
+            # Periodically evaluate validation loss
+            if step % EVAL_INTERVAL == 0 or step == NUM_ITERATIONS - 1:
+                x_val_batch, y_val_batch = get_batch("val")
+                _, val_loss = model(x_val_batch, y_val_batch)
+            
+            bar.set_postfix(train_loss=loss.numpy(), val_loss=val_loss.numpy())
 
-    print(f"\nTraining finished. Final training loss: {loss.numpy():.4f}")
-    print(f"Final validation loss: {val_loss.numpy():.4f}")
-    print("-" * 25)
-    # Save the trained model
-    model.save_weights("gpt_model.weights.h5")
-    del model
+        print(f"\nTraining finished. Final training loss: {loss.numpy():.4f}")
+        print(f"Final validation loss: {val_loss.numpy():.4f}")
+        print("-" * 25)
+        # Save the trained model
+        model.save_weights("gpt_model.weights.h5")
+        del model
 
     # --- Generate text from the TRAINED model ---
     print("\n--- Generating text from TRAINED model ---")
